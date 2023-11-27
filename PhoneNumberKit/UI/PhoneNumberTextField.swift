@@ -357,12 +357,24 @@ open class PhoneNumberTextField: UITextField, UITextFieldDelegate {
             // and above just because that is where we have access to label colors
             let firstSpaceIndex = example.firstIndex(where: { $0 == " " }) ?? example.startIndex
 
-            ph.addAttribute(.foregroundColor, value: self.countryCodePlaceholderColor, range: NSRange(..<firstSpaceIndex, in: example))
-            ph.addAttribute(.foregroundColor, value: self.numberPlaceholderColor, range: NSRange(firstSpaceIndex..., in: example))
+            let color = UIColor.init(red: 39/255.0, green: 46/255.0, blue: 52/255.0, alpha: 0.7)
+            
+            ph.addAttribute(.foregroundColor, value: color/*self.countryCodePlaceholderColor*/, range: NSRange(..<firstSpaceIndex, in: example))
+            ph.addAttribute(.foregroundColor, value: color/*self.numberPlaceholderColor*/, range: NSRange(firstSpaceIndex..., in: example))
         }
         #endif
 
         self.attributedPlaceholder = ph
+    }
+    
+    func parseToBackendFormat() -> String {
+        let rawNumber = self.text ?? String()
+        do {
+            let parser = try phoneNumberKit.parse(rawNumber, withRegion: currentRegion)
+            return String(parser.countryCode) + String(parser.nationalNumber)
+        } catch {
+            return ""
+        }
     }
 
     @objc func didPressFlagButton() {
@@ -370,15 +382,22 @@ open class PhoneNumberTextField: UITextField, UITextFieldDelegate {
         let vc = CountryCodePickerViewController(phoneNumberKit: phoneNumberKit,
                                                  options: withDefaultPickerUIOptions)
         vc.delegate = self
-        if let nav = containingViewController?.navigationController, !PhoneNumberKit.CountryCodePicker.forceModalPresentation {
-            nav.pushViewController(vc, animated: true)
-        } else {
+//        if let nav = containingViewController?.navigationController, !PhoneNumberKit.CountryCodePicker.forceModalPresentation {
+//            nav.pushViewController(vc, animated: true)
+//        } else {
             let nav = UINavigationController(rootViewController: vc)
-            if modalPresentationStyle != nil {
-                nav.modalPresentationStyle = modalPresentationStyle!
-            }
+//            if modalPresentationStyle != nil {
+//                nav.modalPresentationStyle = modalPresentationStyle!
+//            }
+        
+            nav.setNavigationBarHidden(false, animated: true)
+            nav.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            nav.navigationBar.shadowImage = UIImage()
+            nav.view.backgroundColor = .clear
+            nav.navigationBar.isTranslucent = true
+        
             containingViewController?.present(nav, animated: true)
-        }
+//        }
     }
 
     /// containingViewController looks at the responder chain to find the view controller nearest to itself
@@ -573,11 +592,11 @@ extension PhoneNumberTextField: CountryCodePickerDelegate {
         updateFlag()
         updatePlaceholder()
 
-        if let nav = containingViewController?.navigationController, !PhoneNumberKit.CountryCodePicker.forceModalPresentation {
-            nav.popViewController(animated: true)
-        } else {
+//        if let nav = containingViewController?.navigationController, !PhoneNumberKit.CountryCodePicker.forceModalPresentation {
+//            nav.popViewController(animated: true)
+//        } else {
             containingViewController?.dismiss(animated: true)
-        }
+//        }
     }
 }
 
